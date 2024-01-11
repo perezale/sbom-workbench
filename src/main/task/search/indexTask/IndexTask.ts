@@ -1,6 +1,8 @@
 import log from 'electron-log';
 import { Scanner } from 'main/task/scanner/types';
 import i18next from 'i18next';
+import { app, utilityProcess } from 'electron';
+import path from 'path';
 import { modelProvider } from '../../../services/ModelProvider';
 import { Indexer } from '../../../modules/searchEngine/indexer/Indexer';
 import { IIndexer } from '../../../modules/searchEngine/indexer/IIndexer';
@@ -29,6 +31,21 @@ export class IndexTask implements Scanner.IPipelineTask {
     log.info('[ IndexTask init ]');
     const project = workspace.getOpenProject();
     if (!project) throw new Error('Not project opened');
+
+    const RESOURCES_PATH = app.isPackaged
+      ? path.join(__dirname, 'scanner.js')
+      : path.join(app.getAppPath(), '.erb/dll/scanner.js');
+
+    const child = utilityProcess.fork(RESOURCES_PATH, [], { stdio: 'pipe' });
+
+    child.stdout.on('data', (data) => {
+      log.info('%c[ THREAD ]: Index Thread ', 'color: green', data.toString());
+    });
+
+    child.stderr.on('data', (data) => {
+      log.info('%c[ THREAD ]: Index Thread ', 'color: green', data.toString());
+    });
+
     const f = this.project
       .getTree()
       .getRootFolder()
@@ -40,22 +57,32 @@ export class IndexTask implements Scanner.IPipelineTask {
       QueryBuilderCreator.create({ paths }),
     );
 
-    const indexer = new Indexer();
-    const filesToIndex = this.fileAdapter(files);
-    const index = indexer.index(filesToIndex);
-    const projectPath = this.project.metadata.getMyPath();
-    await indexer.saveIndex(index, `${projectPath}/dictionary/`);
-    this.project.save();
-    return true;
+    const scanRoot = this.project.metadata.getScanRoot();
+
+    child.postMessage({ action: 'SEARCH_INDEX', data: { projectPath: this.project.metadata.getMyPath(), scanRoot, files } });
+
+    return new Promise((resolve, reject) => {
+      child.on('message', (data) => {
+        log.info('%c[ THREAD ]: Index Thread ', 'color: green', data.toString());
+        if (data.event === 'success') {
+          this.project.save();
+          resolve(true);
+        } else reject(new Error('Index task failed'));
+        child.kill();
+      });
+    });
   }
 
-  private fileAdapter(modelFiles: any): Array<IIndexer> {
+  private fileAdapter(files: any, scanRoot: string): Array<IIndexer> {
     const filesToIndex = [];
-    const p = workspace.getOpenProject();
-    const scanRoot = p.metadata.getScanRoot();
-    modelFiles.forEach((file: any) => {
+    files.forEach((file: any) => {
       filesToIndex.push({ fileId: file.id, path: `${scanRoot}${file.path}` });
     });
     return filesToIndex;
   }
+
+  /*const indexer = new Indexer();
+  const filesToIndex = this.fileAdapter();
+  const index = indexer.index(filesToIndex);
+  await indexer.saveIndex(index, `${this.projectPath}/dictionary/`);*/
 }

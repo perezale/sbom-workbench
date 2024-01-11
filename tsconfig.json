@@ -31,7 +31,6 @@
       "@components/*": ["renderer/components/*"],
       "@hooks/*": ["renderer/hooks/*"],
       "@store/*": ["renderer/store/*"],
-      "flexsearch": ["node_modules/@types/flexsearch"]
     },
      /* Module Resolution Options */
      "noImplicitAny": false,

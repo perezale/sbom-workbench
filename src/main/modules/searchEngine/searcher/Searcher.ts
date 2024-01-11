@@ -1,10 +1,8 @@
 import fs from 'fs';
 import path from 'path';
+import { Index } from 'flexsearch';
 import { ISearcher } from './ISearcher';
 import { getSearchConfig } from '../../../../shared/utils/search-utils';
-
-
-const { Index }  = require('flexsearch');
 
 class Searcher {
   private index: any;

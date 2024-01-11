@@ -24,6 +24,8 @@ import { workspace } from './workspace/Workspace';
 import { userSettingService } from './services/UserSettingService';
 import { AppI18n, AppI18nContext } from '../shared/i18n';
 
+const Module = require('module');
+
 // handlers
 import '../api/handlers/inventory.handler';
 import '../api/handlers/component.handler';
@@ -68,6 +70,31 @@ const isDebug = process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD
 
 if (isDebug) {
   require('electron-debug')({ showDevTools: false });
+}
+
+
+// load the app dependencies in dev mode
+if (process.env.NODE_ENV === 'development') {
+
+
+  const PATH_APP_NODE_MODULES = path.join(__dirname, '..', '..', 'release', 'app', 'node_modules');
+  const PATH_OTHER_NODE_MODULES = path.join(__dirname, '..', 'node_modules');
+
+  console.log(PATH_OTHER_NODE_MODULES);
+  console.log(PATH_APP_NODE_MODULES);
+
+  // eslint-disable-next-line no-underscore-dangle
+  const originalNodeModulePaths = Module._nodeModulePaths;
+
+  // eslint-disable-next-line no-underscore-dangle
+  Module._nodeModulePaths = (from) => {
+    const originalPaths = originalNodeModulePaths(from);
+    return [
+      ...originalPaths,
+      PATH_APP_NODE_MODULES,
+      PATH_OTHER_NODE_MODULES,
+    ];
+  };
 }
 
 const installExtensions = async () => {

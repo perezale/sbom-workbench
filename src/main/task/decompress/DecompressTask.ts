@@ -28,25 +28,24 @@ export class DecompressTask implements Scanner.IPipelineTask {
     log.info('[ DecompressTask init ]');
 
     const RESOURCES_PATH = app.isPackaged
-     ? path.join(__dirname, 'scanner.js')
-     : path.join(app.getAppPath(), '.erb/dll/scanner.js');
+      ? path.join(__dirname, 'scanner.js')
+      : path.join(app.getAppPath(), '.erb/dll/scanner.js');
 
-   const child = utilityProcess.fork(RESOURCES_PATH, [], { stdio: "pipe" });
+    const child = utilityProcess.fork(RESOURCES_PATH, [], { stdio: 'pipe' });
 
-   child.stdout.on ("data", (data) => {
-     log.info(`%c[ THREAD ]: Decompress Thread `, 'color: green', data.toString());
-   });
+    child.stdout.on('data', (data) => {
+      log.info('%c[ THREAD ]: Decompress Thread ', 'color: green', data.toString());
+    });
 
-   child.postMessage({ action: 'DECOMPRESS', data: this.project.getScanRoot() });
+    child.postMessage({ action: 'DECOMPRESS', data: this.project.getScanRoot() });
 
-   return new Promise((resolve, reject) => {
-     child.on('message', (data) => {
-       log.info(`%c[ THREAD ]: Decompress Thread `, 'color: green', data.toString());
-       if (data.event === 'success') resolve(true);
-       else reject(new Error('Decompress task failed'));
-       child.kill();
-     });
-   });
+    return new Promise((resolve, reject) => {
+      child.on('message', (data) => {
+        log.info('%c[ THREAD ]: Decompress Thread ', 'color: green', data.toString());
+        if (data.event === 'success') resolve(true);
+        else reject(new Error('Decompress task failed'));
+        child.kill();
+      });
+    });
   }
-
 }
