@@ -280,6 +280,9 @@
       },
       "category": "Development"
     },
+    "flatpak": {
+      "category": "Development"
+    },
     "directories": {
       "app": "release/app",
       "buildResources": "assets",
