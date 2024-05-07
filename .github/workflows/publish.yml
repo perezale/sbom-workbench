@@ -138,6 +138,13 @@ jobs:
           node-version: 16
           cache: npm
 
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install flatpak -y
+          sudo apt-get install flatpak-builder -y
+          sudo apt-get install elfutils -y
+
       - name: Install and build
         run: |
           npm install --legacy-peer-deps
