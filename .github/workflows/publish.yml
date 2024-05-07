@@ -154,12 +154,14 @@ jobs:
       - name: Build binaries for linux
         run: |
           npm exec -- electron-builder build --linux --publish never
+          npm exec -- electron-builder build --linux flatpak --publish never
 
       - uses: actions/upload-artifact@v3
         with:
           name: artifact_l
           path: |
             release/build/${{ env.ARTIFACT_NAME_PREFIX }}*.AppImage
+            release/build/${{ env.ARTIFACT_NAME_PREFIX }}*.flatpak
             release/build/latest-linux.yml
 
 
