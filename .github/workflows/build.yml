@@ -1,0 +1,54 @@
+name: Build
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*.*.*'
+
+
+env:
+  ARTIFACT_NAME_PREFIX: "sbom-workbench"    ##This is the build.artifactName on package.json prefix
+
+jobs:
+
+  build_l:
+    name: "Build for Linux"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v3
+
+      - name: Install Node and NPM
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install flatpak -y
+          sudo apt-get install flatpak-builder -y
+          sudo apt-get install elfutils -y
+
+      - name: Install and build
+        run: |
+          npm install --legacy-peer-deps
+          npm run postinstall
+          npm run build
+
+      - name: Build binaries for linux
+        run: |
+          npm exec -- electron-builder build --linux --publish never
+          npm exec -- electron-builder build --linux flatpak --publish never
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: artifact_l
+          path: |
+            release/build/${{ env.ARTIFACT_NAME_PREFIX }}*.AppImage
+            release/build/${{ env.ARTIFACT_NAME_PREFIX }}*.flatpak
+            release/build/latest-linux.yml
+
